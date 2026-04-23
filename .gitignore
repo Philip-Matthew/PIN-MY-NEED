@@ -1,0 +1,120 @@
+# ======================
+# Node modules
+# ======================
+node_modules/
+**/node_modules/
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ======================
+# Runtime data
+# ======================
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ======================
+# Environment variables
+# ======================
+.env
+.env.*
+!.env.example
+
+# ======================
+# Build folders
+# ======================
+dist/
+build/
+**/dist/
+**/build/
+
+# React build
+frontend/build/
+
+# ======================
+# Coverage
+# ======================
+coverage/
+*.lcov
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# Editor / IDE
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ======================
+# Optional VSCode settings (keep if you want)
+# ======================
+# !.vscode/settings.json
+# !.vscode/extensions.json
+
+# ======================
+# MongoDB
+# ======================
+data/
+*.db
+*.sqlite
+
+# ======================
+# Temporary files
+# ======================
+tmp/
+temp/
+
+# ======================
+# Cache
+# ======================
+.cache/
+.parcel-cache/
+
+# ======================
+# Next.js / Vite / CRA extras
+# ======================
+.next/
+out/
+.vite/
+
+# ======================
+# TypeScript
+# ======================
+*.tsbuildinfo
+
+# ======================
+# ESLint cache
+# ======================
+.eslintcache
+
+# ======================
+# Docker (if used)
+# ======================
+.dockerignore
+
+# ======================
+# Misc
+# ======================
+*.tgz
+*.bak
+*.old
+
+# ======================
+# Secrets (extra safety)
+# ======================
+config/secrets.js
