@@ -20,8 +20,6 @@ export default function Profile() {
   const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) { navigate("/login"); return; }
-
     const fetchData = async () => {
       try {
         // Fetch live user data
@@ -93,12 +91,17 @@ export default function Profile() {
                 <h1 className="prof-name">{user?.name || "User"}</h1>
                 <p className="prof-phone">
                   📱 {user?.phone}
-                  <span className={`prof-badge ${user?.role === "business" ? "prof-badge--biz" : ""}`}>
-                    {user?.role === "business" ? "🏪 Business Owner" : "🙋 Customer"}
+                  <span
+                    className={`prof-badge ${user?.role === "business" ? "prof-badge--biz" : ""}`}
+                  >
+                    {user?.role === "business"
+                      ? "🏪 Business Owner"
+                      : "🙋 Customer"}
                   </span>
                 </p>
                 <button className="prof-role-switch" onClick={handleRoleSwitch}>
-                  Switch to {user?.role === "customer" ? "Business Owner" : "Customer"} →
+                  Switch to{" "}
+                  {user?.role === "customer" ? "Business Owner" : "Customer"} →
                 </button>
               </div>
               <div className="prof-stats-row">
@@ -119,10 +122,16 @@ export default function Profile() {
 
             {/* Action Buttons */}
             <div className="prof-actions">
-              <button className="prof-action-btn prof-action-btn--primary" onClick={() => navigate("/map")}>
+              <button
+                className="prof-action-btn prof-action-btn--primary"
+                onClick={() => navigate("/map")}
+              >
                 📌 Go to Map
               </button>
-              <button className="prof-action-btn" onClick={() => navigate("/dashboard")}>
+              <button
+                className="prof-action-btn"
+                onClick={() => navigate("/dashboard")}
+              >
                 📊 Dashboard
               </button>
               <button
@@ -156,8 +165,16 @@ export default function Profile() {
                     <div key={pin._id} className="prof-pin-card">
                       <div className="prof-pin-top">
                         <CategoryBadge category={pin.category} />
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span className="prof-pin-votes">▲ {pin.votes || 1}</span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <span className="prof-pin-votes">
+                            ▲ {pin.votes || 1}
+                          </span>
                           <button
                             className="prof-delete-btn"
                             onClick={() => handleDelete(pin._id)}
@@ -168,18 +185,25 @@ export default function Profile() {
                           </button>
                         </div>
                       </div>
-                      <DemandHeatBar votes={pin.votes || 1} maxVotes={maxVotes} showLabel={false} />
+                      <DemandHeatBar
+                        votes={pin.votes || 1}
+                        maxVotes={maxVotes}
+                        showLabel={false}
+                      />
                       {pin.description && (
                         <p className="prof-pin-desc">{pin.description}</p>
                       )}
                       {pin.location?.coordinates && (
                         <p className="prof-pin-coords">
-                          📍 {pin.location.coordinates[1].toFixed(4)}, {pin.location.coordinates[0].toFixed(4)}
+                          📍 {pin.location.coordinates[1].toFixed(4)},{" "}
+                          {pin.location.coordinates[0].toFixed(4)}
                         </p>
                       )}
                       <p className="prof-pin-date">
                         {new Date(pin.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric", month: "short", year: "numeric"
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
                         })}
                       </p>
                     </div>
@@ -193,10 +217,26 @@ export default function Profile() {
               <h2 className="prof-section-title">💡 How to Use PinMyNeed</h2>
               <div className="prof-steps">
                 {[
-                  { step: "1", title: "Go to the Map", desc: "Navigate to the map to see your area." },
-                  { step: "2", title: "Click to Pin", desc: "Tap any spot to add a new requirement." },
-                  { step: "3", title: "Choose Category", desc: "Pick Tea Shop, Hospital, ATM, etc." },
-                  { step: "4", title: "Community Votes", desc: "Others upvote to raise demand priority." },
+                  {
+                    step: "1",
+                    title: "Go to the Map",
+                    desc: "Navigate to the map to see your area.",
+                  },
+                  {
+                    step: "2",
+                    title: "Click to Pin",
+                    desc: "Tap any spot to add a new requirement.",
+                  },
+                  {
+                    step: "3",
+                    title: "Choose Category",
+                    desc: "Pick Tea Shop, Hospital, ATM, etc.",
+                  },
+                  {
+                    step: "4",
+                    title: "Community Votes",
+                    desc: "Others upvote to raise demand priority.",
+                  },
                 ].map((s, i) => (
                   <div key={i} className="prof-step">
                     <div className="prof-step-num">{s.step}</div>

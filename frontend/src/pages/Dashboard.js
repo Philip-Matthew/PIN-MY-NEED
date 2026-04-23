@@ -15,24 +15,25 @@ export default function Dashboard() {
   const [userPos, setUserPos] = useState(null);
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) navigate("/login");
-  }, [navigate]);
+    navigator.geolocation.getCurrentPosition(
+      async (p) => {
+        const lat = p.coords.latitude;
+        const lng = p.coords.longitude;
+        setUserPos({ lat, lng });
 
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(async (p) => {
-      const lat = p.coords.latitude;
-      const lng = p.coords.longitude;
-      setUserPos({ lat, lng });
-
-      try {
-        const res = await API.get(`/requirements/nearby?latitude=${lat}&longitude=${lng}`);
-        setPins(res.data || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }, () => setLoading(false));
+        try {
+          const res = await API.get(
+            `/requirements/nearby?latitude=${lat}&longitude=${lng}`,
+          );
+          setPins(res.data || []);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      },
+      () => setLoading(false),
+    );
   }, []);
 
   // Aggregate category counts
@@ -54,10 +55,25 @@ export default function Dashboard() {
   const topPin = [...pins].sort((a, b) => (b.votes || 1) - (a.votes || 1))[0];
 
   const STAT_CARDS = [
-    { icon: "📍", label: "Total Pins Nearby", value: pins.length, color: "#3b82f6" },
+    {
+      icon: "📍",
+      label: "Total Pins Nearby",
+      value: pins.length,
+      color: "#3b82f6",
+    },
     { icon: "🗳️", label: "Total Votes", value: totalVotes, color: "#fbbf24" },
-    { icon: "🏆", label: "Top Category", value: topCategories[0]?.cat || "—", color: "#ef4444" },
-    { icon: "📊", label: "Unique Needs", value: Object.keys(categoryMap).length, color: "#10b981" },
+    {
+      icon: "🏆",
+      label: "Top Category",
+      value: topCategories[0]?.cat || "—",
+      color: "#ef4444",
+    },
+    {
+      icon: "📊",
+      label: "Unique Needs",
+      value: Object.keys(categoryMap).length,
+      color: "#10b981",
+    },
   ];
 
   return (
@@ -75,7 +91,10 @@ export default function Dashboard() {
                 : "Loading your location..."}
             </p>
           </div>
-          <button className="dash-refresh" onClick={() => window.location.reload()}>
+          <button
+            className="dash-refresh"
+            onClick={() => window.location.reload()}
+          >
             ↺ Refresh
           </button>
         </div>
@@ -90,7 +109,11 @@ export default function Dashboard() {
             {/* Stat Cards */}
             <div className="dash-stat-grid">
               {STAT_CARDS.map((s, i) => (
-                <div key={i} className="dash-stat-card" style={{ "--accent": s.color }}>
+                <div
+                  key={i}
+                  className="dash-stat-card"
+                  style={{ "--accent": s.color }}
+                >
                   <div className="dash-stat-icon">{s.icon}</div>
                   <div className="dash-stat-val">{s.value}</div>
                   <div className="dash-stat-lbl">{s.label}</div>
@@ -111,9 +134,14 @@ export default function Dashboard() {
                       <div key={i} className="dash-cat-row">
                         <div className="dash-cat-info">
                           <CategoryBadge category={item.cat} />
-                          <span className="dash-cat-count">{item.count} pin{item.count > 1 ? "s" : ""}</span>
+                          <span className="dash-cat-count">
+                            {item.count} pin{item.count > 1 ? "s" : ""}
+                          </span>
                         </div>
-                        <DemandHeatBar votes={item.totalVotes} maxVotes={maxVotes} />
+                        <DemandHeatBar
+                          votes={item.totalVotes}
+                          maxVotes={maxVotes}
+                        />
                       </div>
                     ))}
                   </div>
@@ -129,10 +157,15 @@ export default function Dashboard() {
                       <CategoryBadge category={topPin.category} size="lg" />
                     </div>
                     <div className="dash-top-pin-votes">
-                      <span className="dash-votes-num">{topPin.votes || 1}</span>
+                      <span className="dash-votes-num">
+                        {topPin.votes || 1}
+                      </span>
                       <span className="dash-votes-lbl">community votes</span>
                     </div>
-                    <DemandHeatBar votes={topPin.votes || 1} maxVotes={maxVotes} />
+                    <DemandHeatBar
+                      votes={topPin.votes || 1}
+                      maxVotes={maxVotes}
+                    />
                     <div className="dash-top-pin-coords">
                       {topPin.location?.coordinates
                         ? `📍 ${topPin.location.coordinates[1].toFixed(4)}, ${topPin.location.coordinates[0].toFixed(4)}`
@@ -150,12 +183,16 @@ export default function Dashboard() {
                 )}
 
                 {/* Recent Pins */}
-                <h2 className="dash-panel-title" style={{ marginTop: "28px" }}>🕐 Recent Pins</h2>
+                <h2 className="dash-panel-title" style={{ marginTop: "28px" }}>
+                  🕐 Recent Pins
+                </h2>
                 <div className="dash-recent">
                   {pins.slice(0, 5).map((p, i) => (
                     <div key={i} className="dash-recent-row">
                       <CategoryBadge category={p.category} />
-                      <span className="dash-recent-votes">▲ {p.votes || 1}</span>
+                      <span className="dash-recent-votes">
+                        ▲ {p.votes || 1}
+                      </span>
                     </div>
                   ))}
                 </div>

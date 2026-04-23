@@ -1,13 +1,3 @@
-// pages/MapPage.js — UPDATED (drop-in replacement for your existing MapPage.js)
-// Changes made (all additive, no logic removed):
-//   1. Replaces prompt() with AddRequirementModal (already built, now wired)
-//   2. Adds Navbar at top (56px offset applied)
-//   3. Adds category filter bar in sidebar
-//   4. Adds DemandHeatBar to sidebar cards
-//   5. Adds CategoryBadge to sidebar cards
-//   6. Upvote no longer reloads page (state update instead)
-//   7. Sidebar shows "No pins" empty state
-
 import {
   MapContainer,
   TileLayer,
@@ -41,13 +31,8 @@ function Recenter({ pos }) {
   return null;
 }
 
-// Now opens a modal instead of prompt()
 function AddPin({ onMapClick }) {
-  useMapEvents({
-    click: (e) => {
-      onMapClick(e.latlng);
-    },
-  });
+  useMapEvents({ click: (e) => onMapClick(e.latlng) });
   return null;
 }
 
@@ -56,13 +41,15 @@ export default function MapPage() {
   const [markers, setMarkers] = useState([]);
   const [pos, setPos] = useState(null);
   const [selectedPos, setSelectedPos] = useState(null);
-
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [clickedLatLng, setClickedLatLng] = useState(null);
-
-  // Filter state
   const [filter, setFilter] = useState("All");
+
+  // Track which pins the current user has already upvoted this session
+  const [votedIds, setVotedIds] = useState(new Set());
+
+  // Get current user id from localStorage to detect own pins
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   const customIcon = new L.Icon({
     iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
@@ -74,23 +61,39 @@ export default function MapPage() {
       const res = await API.get(
         `/requirements/nearby?latitude=${lat}&longitude=${lng}`,
       );
-      setMarkers(res.data || []);
+      const pins = res.data || [];
+      setMarkers(pins);
+
+      // Pre-populate votedIds from the voters arrays returned by the API
+      const alreadyVoted = new Set(
+        pins
+          .filter((p) =>
+            p.voters?.some(
+              (v) => (v._id || v).toString() === currentUser._id?.toString(),
+            ),
+          )
+          .map((p) => p._id),
+      );
+      setVotedIds(alreadyVoted);
     } catch (e) {
       console.error(e);
     }
   };
 
   useEffect(() => {
-    if (!localStorage.getItem("token")) navigate("/login");
-  }, [navigate]);
-
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition((p) => {
-      const lat = p.coords.latitude;
-      const lng = p.coords.longitude;
-      setPos([lat, lng]);
-      loadPins(lat, lng);
-    });
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const lat = p.coords.latitude;
+        const lng = p.coords.longitude;
+        setPos([lat, lng]);
+        loadPins(lat, lng);
+      },
+      () => {
+        // Fallback to Chennai if geolocation denied
+        setPos([13.0827, 80.2707]);
+        loadPins(13.0827, 80.2707);
+      },
+    );
   }, []);
 
   const handleMapClick = (latlng) => {
@@ -115,19 +118,22 @@ export default function MapPage() {
 
   const handleUpvote = async (pinId) => {
     try {
-      await API.post(`/requirements/${pinId}/upvote`);
-      // Update votes in state — no page reload needed
+      // ✅ FIX: use the actual vote count returned by the API
+      // instead of blindly incrementing local state
+      const res = await API.post(`/requirements/${pinId}/upvote`);
+      const { votes } = res.data;
+
       setMarkers((prev) =>
-        prev.map((m) =>
-          m._id === pinId ? { ...m, votes: (m.votes || 1) + 1 } : m,
-        ),
+        prev.map((m) => (m._id === pinId ? { ...m, votes } : m)),
       );
+
+      // Mark this pin as voted so the button disables immediately
+      setVotedIds((prev) => new Set(prev).add(pinId));
     } catch (e) {
       alert(e.response?.data?.message || "Error");
     }
   };
 
-  // Unique categories for filter
   const categories = [
     "All",
     ...new Set(markers.map((m) => m.category).filter(Boolean)),
@@ -167,7 +173,6 @@ export default function MapPage() {
             <span className="mp-count">{filteredMarkers.length} pins</span>
           </div>
 
-          {/* Category Filter */}
           <div className="mp-filters">
             {categories.map((cat) => (
               <button
@@ -180,7 +185,6 @@ export default function MapPage() {
             ))}
           </div>
 
-          {/* Pin List */}
           <div className="mp-pin-list">
             {filteredMarkers.length === 0 ? (
               <div className="mp-empty">
@@ -235,6 +239,12 @@ export default function MapPage() {
               if (!m?.location?.coordinates) return null;
               const lat = m.location.coordinates[1];
               const lng = m.location.coordinates[0];
+
+              const isOwnPin =
+                m.user?._id?.toString() === currentUser._id?.toString();
+              const hasVoted = votedIds.has(m._id);
+              const cannotVote = isOwnPin || hasVoted;
+
               return (
                 <Marker icon={customIcon} key={m._id} position={[lat, lng]}>
                   <Popup>
@@ -254,18 +264,33 @@ export default function MapPage() {
                       <button
                         style={{
                           padding: "6px 12px",
-                          background: "linear-gradient(45deg,#fbbf24,#f59e0b)",
+                          background: cannotVote
+                            ? "#e5e7eb"
+                            : "linear-gradient(45deg,#fbbf24,#f59e0b)",
                           border: "none",
                           borderRadius: "6px",
-                          color: "#0a0a0f",
+                          color: cannotVote ? "#9ca3af" : "#0a0a0f",
                           fontWeight: "bold",
-                          cursor: "pointer",
+                          cursor: cannotVote ? "not-allowed" : "pointer",
                           fontSize: "13px",
                           width: "100%",
+                          transition: "all 0.2s",
                         }}
-                        onClick={() => handleUpvote(m._id)}
+                        onClick={() => !cannotVote && handleUpvote(m._id)}
+                        disabled={cannotVote}
+                        title={
+                          isOwnPin
+                            ? "You can't upvote your own pin"
+                            : hasVoted
+                              ? "Already voted"
+                              : "Upvote this need"
+                        }
                       >
-                        👍 Upvote
+                        {isOwnPin
+                          ? "📌 Your Pin"
+                          : hasVoted
+                            ? "✅ Voted"
+                            : "👍 Upvote"}
                       </button>
                     </div>
                   </Popup>
@@ -315,7 +340,6 @@ export default function MapPage() {
           overflow: hidden;
         }
 
-        /* SIDEBAR */
         .mp-sidebar {
           width: 300px;
           flex-shrink: 0;
@@ -347,7 +371,6 @@ export default function MapPage() {
           border-radius: 100px;
         }
 
-        /* FILTERS */
         .mp-filters {
           display: flex;
           gap: 6px;
@@ -378,7 +401,6 @@ export default function MapPage() {
           font-weight: 600;
         }
 
-        /* PIN LIST */
         .mp-pin-list {
           flex: 1;
           overflow-y: auto;
@@ -419,7 +441,6 @@ export default function MapPage() {
         .mp-card-votes { font-size: 12px; color: #fbbf24; font-weight: 700; }
         .mp-card-coords { font-size: 10px; color: #374151; }
 
-        /* MAP */
         .mp-map-area {
           flex: 1;
           position: relative;
