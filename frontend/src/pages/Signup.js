@@ -21,7 +21,12 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await API.post("/auth/register", { name, phone, password, role });
+      const res = await API.post("/auth/register", {
+        name,
+        phone,
+        password,
+        role,
+      });
 
       localStorage.setItem("token", res.data.token);
       // ✅ Store user so Profile/Navbar can display name & role
@@ -42,20 +47,35 @@ export default function Signup() {
 
         <form onSubmit={submit} className="signup-form">
           <div className="input-group">
-            <input type="text" placeholder=" " value={name}
-              onChange={(e) => setName(e.target.value)} required />
+            <input
+              type="text"
+              placeholder=" "
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
             <label>Name</label>
           </div>
 
           <div className="input-group">
-            <input type="text" placeholder=" " value={phone}
-              onChange={(e) => setPhone(e.target.value)} required />
+            <input
+              type="text"
+              placeholder=" "
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
             <label>Phone</label>
           </div>
 
           <div className="input-group">
-            <input type="password" placeholder=" " value={password}
-              onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              type="password"
+              placeholder=" "
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
             <label>Password</label>
           </div>
 
@@ -96,7 +116,6 @@ export default function Signup() {
           display: flex;
           justify-content: center;
           align-items: center;
-          background-image: url("l1.png");
           font-family: 'Segoe UI', sans-serif;
         }
         .signup-card {

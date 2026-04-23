@@ -74,7 +74,6 @@ export default function Login() {
           display: flex;
           justify-content: center;
           align-items: center;
-          background-image: url("l1.png");
           font-family: 'Segoe UI', sans-serif;
         }
         .login-card {
