@@ -1,11 +1,7 @@
-// middleware/auth.js — UPDATED (drop-in replacement)
-// Changes:
-//   1. Cleaner error handling with specific messages
-//   2. Added `restrictTo` helper — lets you guard routes by role
-//      Usage in routes: router.get("/business-only", protect, restrictTo("business"), handler)
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+
+// JWT_SECRET is guaranteed to exist — server.js validates it at startup.
 
 // ─── Main protect middleware ───────────────────────────────────────────────────
 const protect = async (req, res, next) => {
@@ -23,7 +19,7 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret123");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded._id).select("-password");
     if (!user) {
@@ -34,15 +30,16 @@ const protect = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token expired — please log in again" });
+      return res
+        .status(401)
+        .json({ message: "Token expired — please log in again" });
     }
     return res.status(401).json({ message: "Invalid token" });
   }
 };
 
 // ─── Role guard (optional helper) ─────────────────────────────────────────────
-// Use after `protect`:
-//   router.post("/business-feature", protect, restrictTo("business"), handler)
+// Usage in routes: router.get("/business-only", protect, restrictTo("business"), handler)
 const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

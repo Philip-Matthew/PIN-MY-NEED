@@ -1,16 +1,10 @@
-// controllers/authController.js — UPDATED (drop-in replacement)
-// Changes:
-//   1. register & login now return { token, user } so the frontend can store name/phone/role
-//   2. register now accepts optional `role` field ("customer" | "business")
-//   3. Consistent JWT_SECRET usage (no more fallback to "secret123" in prod — use .env)
-//   4. Added `getMe` for GET /api/auth/me to fetch current logged-in user
-
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// JWT_SECRET is guaranteed to exist — server.js validates it at startup.
 const signToken = (userId) =>
-  jwt.sign({ _id: userId }, process.env.JWT_SECRET || "secret123", {
+  jwt.sign({ _id: userId }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 
@@ -26,8 +20,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Enter a valid phone number" });
 
     const exists = await User.findOne({ phone });
-    if (exists)
-      return res.status(400).json({ message: "User already exists" });
+    if (exists) return res.status(400).json({ message: "User already exists" });
 
     const hash = await bcrypt.hash(password, 10);
 
@@ -40,7 +33,6 @@ exports.register = async (req, res) => {
 
     const token = signToken(user._id);
 
-    // ✅ Return user object so frontend can store name/phone/role
     res.status(201).json({
       token,
       user: {
@@ -73,7 +65,6 @@ exports.login = async (req, res) => {
 
     const token = signToken(user._id);
 
-    // ✅ Return user object so frontend can store name/phone/role
     res.json({
       token,
       user: {
@@ -89,10 +80,8 @@ exports.login = async (req, res) => {
 };
 
 // GET /api/auth/me  (protected)
-// Returns the currently logged-in user's profile
 exports.getMe = async (req, res) => {
   try {
-    // req.user is set by the protect middleware
     const user = await User.findById(req.user._id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
@@ -102,7 +91,6 @@ exports.getMe = async (req, res) => {
 };
 
 // PATCH /api/auth/me  (protected)
-// Lets the user update their name or role
 exports.updateMe = async (req, res) => {
   try {
     const allowed = {};
